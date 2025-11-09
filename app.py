@@ -7,7 +7,7 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import uuid
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.')
 
 # تنظیمات API
 API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyCdRL9mQBAotXCLgyu_BNkaZVu_juL2yok')
@@ -20,7 +20,19 @@ book_content = ""
 
 @app.route('/')
 def index():
-    return send_from_directory('.', 'chatbot_new.html')
+    try:
+        return send_from_directory('.', 'chatbot_new.html')
+    except:
+        return """
+        <html dir="rtl">
+        <head><meta charset="UTF-8"><title>طرح درس ساز</title></head>
+        <body style="font-family: Tahoma; padding: 20px; text-align: center;">
+            <h1>🎓 طرح درس ساز آنلاین</h1>
+            <p>سرویس در حال راه‌اندازی است...</p>
+            <p>لطفاً چند لحظه صبر کنید.</p>
+        </body>
+        </html>
+        """
 
 @app.route('/chatbot_new.html')
 def chatbot_new():

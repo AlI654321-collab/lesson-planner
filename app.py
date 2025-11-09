@@ -8,6 +8,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 import uuid
 
 app = Flask(__name__, static_folder='.', template_folder='.')
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
 
 # تنظیمات API
 API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyCdRL9mQBAotXCLgyu_BNkaZVu_juL2yok')
@@ -106,7 +107,8 @@ def upload_files():
             if syllabus_file and syllabus_file.filename != '':
                 print(f"📄 در حال خواندن طرح درس نمونه: {syllabus_file.filename}")
                 try:
-                    syllabus_content = extract_text_from_pdf(syllabus_file)
+                    # محدود کردن به 50 صفحه برای طرح درس
+                    syllabus_content = extract_text_from_pdf(syllabus_file, max_pages=50)
                     syllabus_name = syllabus_file.filename
                     print(f"✓ طرح درس: {len(syllabus_content)} کاراکتر")
                 except Exception as e:
@@ -119,16 +121,19 @@ def upload_files():
         if 'book' in request.files:
             book_file = request.files['book']
             if book_file and book_file.filename != '':
-                print(f"📚 در حال خواندن کل کتاب: {book_file.filename}")
+                print(f"📚 در حال خواندن کتاب: {book_file.filename}")
                 try:
-                    book_content = extract_text_from_pdf(book_file)
+                    # محدود کردن به 100 صفحه برای کتاب (برای جلوگیری از timeout)
+                    book_content = extract_text_from_pdf(book_file, max_pages=100)
                     book_name = book_file.filename
                     print(f"✓ کتاب: {len(book_content)} کاراکتر")
                     
-                    # تحلیل خودکار کتاب
+                    # تحلیل خودکار کتاب (فقط 20 صفحه اول)
                     print("🔍 در حال تحلیل محتوای کتاب...")
                     try:
-                        book_info = analyze_book_content(book_content)
+                        # استفاده از بخش کوچکی برای تحلیل
+                        sample = book_content[:30000]
+                        book_info = analyze_book_content(sample)
                     except Exception as e:
                         print(f"⚠️ خطا در تحلیل کتاب: {e}")
                         book_info = {'course_name': 'نامشخص'}
@@ -211,8 +216,8 @@ def analyze_book_content(content):
             'suggested_request': 'یک طرح درس کامل سالانه برای این کتاب بساز'
         }
 
-def extract_text_from_pdf(file):
-    """خواندن کل محتوای PDF"""
+def extract_text_from_pdf(file, max_pages=None):
+    """خواندن محتوای PDF با محدودیت صفحات برای جلوگیری از timeout"""
     try:
         pdf_data = file.read()
         pdf_file = io.BytesIO(pdf_data)
@@ -222,12 +227,21 @@ def extract_text_from_pdf(file):
         total = len(pdf_reader.pages)
         print(f"  📊 تعداد صفحات: {total}")
         
-        for i, page in enumerate(pdf_reader.pages):
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + "\n"
-            if (i + 1) % 20 == 0:
-                print(f"  ⏳ خوانده شد: {i + 1}/{total}")
+        # محدود کردن تعداد صفحات برای جلوگیری از timeout
+        pages_to_read = min(total, max_pages) if max_pages else total
+        if pages_to_read < total:
+            print(f"  ⚠️ فقط {pages_to_read} صفحه اول خوانده می‌شود")
+        
+        for i in range(pages_to_read):
+            try:
+                page_text = pdf_reader.pages[i].extract_text()
+                if page_text:
+                    text += page_text + "\n"
+                if (i + 1) % 10 == 0:
+                    print(f"  ⏳ خوانده شد: {i + 1}/{pages_to_read}")
+            except Exception as e:
+                print(f"  ⚠️ خطا در صفحه {i+1}: {e}")
+                continue
         
         print(f"  ✓ کل محتوای خوانده شده: {len(text)} کاراکتر")
         

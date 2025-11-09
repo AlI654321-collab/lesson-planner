@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, render_template_string
 import google.generativeai as genai
 import os
 import PyPDF2
@@ -7,7 +7,7 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 import uuid
 
-app = Flask(__name__, static_folder='.')
+app = Flask(__name__, static_folder='.', template_folder='.')
 
 # تنظیمات API
 API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyCdRL9mQBAotXCLgyu_BNkaZVu_juL2yok')
@@ -21,22 +21,33 @@ book_content = ""
 @app.route('/')
 def index():
     try:
-        return send_from_directory('.', 'chatbot_new.html')
-    except:
+        with open('chatbot_new.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        print(f"Error loading HTML: {e}")
         return """
         <html dir="rtl">
         <head><meta charset="UTF-8"><title>طرح درس ساز</title></head>
         <body style="font-family: Tahoma; padding: 20px; text-align: center;">
             <h1>🎓 طرح درس ساز آنلاین</h1>
-            <p>سرویس در حال راه‌اندازی است...</p>
-            <p>لطفاً چند لحظه صبر کنید.</p>
+            <p>خطا در بارگذاری صفحه: """ + str(e) + """</p>
+            <p>لطفاً چند لحظه صبر کنید و صفحه را رفرش کنید.</p>
         </body>
         </html>
         """
 
 @app.route('/chatbot_new.html')
 def chatbot_new():
-    return send_from_directory('.', 'chatbot_new.html')
+    return index()
+
+@app.route('/health')
+def health():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'ok',
+        'message': 'سرویس فعال است',
+        'api_key_set': bool(os.environ.get('GEMINI_API_KEY'))
+    })
 
 @app.route('/test_ai')
 def test_ai():

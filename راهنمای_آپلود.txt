@@ -1,0 +1,95 @@
+🚀 راهنمای آپلود برنامه به Render.com
+
+═══════════════════════════════════════════════════════════
+
+📋 مرحله 1: آماده‌سازی GitHub
+────────────────────────────────────────────────────────────
+1. برو به https://github.com
+2. اگه اکانت نداری، ثبت‌نام کن
+3. روی دکمه "New" کلیک کن و یک Repository جدید بساز
+4. اسم بذار: lesson-planner
+5. Public یا Private انتخاب کن
+6. روی "Create repository" کلیک کن
+
+📋 مرحله 2: آپلود کد به GitHub
+────────────────────────────────────────────────────────────
+روی کامپیوتر خودت، تو پوشه lesson-planner این دستورات رو اجرا کن:
+
+git init
+git add .
+git commit -m "اولین نسخه"
+git branch -M main
+git remote add origin https://github.com/USERNAME/lesson-planner.git
+git push -u origin main
+
+(USERNAME رو با نام کاربری GitHub خودت عوض کن)
+
+📋 مرحله 3: ثبت‌نام در Render
+────────────────────────────────────────────────────────────
+1. برو به https://render.com
+2. روی "Get Started" کلیک کن
+3. با GitHub لاگین کن (راحت‌تره)
+4. دسترسی به Repository رو بده
+
+📋 مرحله 4: ساخت Web Service
+────────────────────────────────────────────────────────────
+1. روی "New +" کلیک کن
+2. "Web Service" رو انتخاب کن
+3. Repository خودت (lesson-planner) رو پیدا کن و "Connect" کن
+4. تنظیمات رو پر کن:
+   
+   Name: lesson-planner
+   Environment: Python 3
+   Build Command: pip install -r requirements.txt
+   Start Command: gunicorn app:app
+   Plan: Free (رایگان)
+
+5. روی "Create Web Service" کلیک کن
+
+📋 مرحله 5: تنظیم API Key (مهم!)
+────────────────────────────────────────────────────────────
+1. تو صفحه سرویس، برو به تب "Environment"
+2. روی "Add Environment Variable" کلیک کن
+3. اضافه کن:
+   Key: GEMINI_API_KEY
+   Value: AIzaSyCdRL9mQBAotXCLgyu_BNkaZVu_juL2yok
+
+4. روی "Save Changes" کلیک کن
+
+📋 مرحله 6: منتظر بمون!
+────────────────────────────────────────────────────────────
+- Render داره برنامه رو نصب می‌کنه (2-5 دقیقه)
+- وقتی آماده شد، یک لینک بهت میده
+- مثلاً: https://lesson-planner-xxxx.onrender.com
+
+═══════════════════════════════════════════════════════════
+
+⚠️ نکات مهم:
+
+✅ اولین بار که کسی میاد، 30 ثانیه طول می‌کشه (چون خاموشه)
+✅ اگه 15 دقیقه استفاده نشه، خاموش میشه (برای صرفه‌جویی)
+✅ 750 ساعت رایگان در ماه داری
+✅ فایل‌های آپلود شده (PDF/Word) موقتی هستن
+
+═══════════════════════════════════════════════════════════
+
+🔧 مشکلات احتمالی:
+
+❌ اگه خطای "Build failed" داد:
+   - چک کن که requirements.txt درست باشه
+   - Build logs رو بخون
+
+❌ اگه سایت باز نشد:
+   - 5 دقیقه صبر کن
+   - Logs رو چک کن
+
+❌ اگه خطای API داد:
+   - مطمئن شو که GEMINI_API_KEY رو تنظیم کردی
+
+═══════════════════════════════════════════════════════════
+
+📞 کمک بیشتر:
+- مستندات Render: https://render.com/docs
+- مستندات Flask: https://flask.palletsprojects.com
+
+موفق باشی! 🎉

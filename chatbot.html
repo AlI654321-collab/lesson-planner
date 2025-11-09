@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سیستم هوشمند تولید طرح درس</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .section {
+            padding: 30px;
+        }
+        .file-input-wrapper {
+            margin: 20px 0;
+        }
+        .file-input-wrapper label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .book-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+        .book-info h3 {
+            margin-bottom: 15px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .info-item {
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+        .chapters-list {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .chapters-list ul {
+            list-style-position: inside;
+        }
+        .suggested-request {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .suggested-request em {
+            color: #667eea;
+            font-size: 16px;
+        }
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-family: Tahoma;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: none;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .preview {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 سیستم هوشمند تولید طرح درس</h1>
+            <p>با قدرت هوش مصنوعی Gemini - نسخه 2.1 (با PDF)</p>
+        </div>
+
+        <div class="section">
+            <h2>📤 مرحله 1: آپلود فایل‌ها</h2>
+            
+            <div class="file-input-wrapper">
+                <label>طرح درس نمونه (PDF):</label>
+                <input type="file" id="syllabusFile" accept=".pdf">
+            </div>
+
+            <div class="file-input-wrapper">
+                <label>کتاب آموزشی (PDF):</label>
+                <input type="file" id="bookFile" accept=".pdf">
+            </div>
+
+            <button class="btn btn-primary" onclick="uploadFiles()">آپلود و تحلیل فایل‌ها</button>
+            
+            <div class="status" id="uploadStatus"></div>
+            <div class="spinner" id="uploadSpinner"></div>
+
+            <!-- نمایش اطلاعات کتاب -->
+            <div class="book-info" id="bookInfo">
+                <h3>📖 اطلاعات کتاب (تحلیل هوشمند):</h3>
+                <div class="info-grid" id="bookInfoGrid"></div>
+                <div class="chapters-list" id="chaptersList"></div>
+                <div class="suggested-request" id="suggestedRequest"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🤖 مرحله 2: تولید طرح درس</h2>
+            
+            <label><strong>درخواست شما:</strong></label>
+            <textarea id="userMessage" rows="4" placeholder="مثال: یک طرح درس کامل سالانه برای جوشکاری E1 پایه دهم بساز"></textarea>
+            
+            <button class="btn btn-primary" onclick="generatePlan()">تولید طرح درس</button>
+            <button class="btn btn-success" onclick="useSuggested()" id="useSuggestedBtn" style="display:none;">استفاده از پیشنهاد هوشمند</button>
+            
+            <div class="spinner" id="generateSpinner"></div>
+            <div class="status" id="generateStatus"></div>
+        </div>
+
+        <div class="section">
+            <h2>👁️ مرحله 3: پیش‌نمایش و دانلود</h2>
+            
+            <div class="preview" id="preview"></div>
+            
+            <div class="export-buttons" id="exportButtons" style="display:none;">
+                <button class="btn btn-success" onclick="exportFile('pdf')">📕 دانلود PDF</button>
+                <button class="btn btn-success" onclick="exportFile('word')">📄 دانلود Word</button>
+                <button class="btn btn-success" onclick="exportFile('excel')">📊 دانلود Excel</button>
+                <button class="btn btn-success" onclick="exportFile('html')">🌐 دانلود HTML</button>
+            </div>
+            
+            <div class="status" id="exportStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentContent = '';
+        let bookInfoData = {};
+
+        async function uploadFiles() {
+            const syllabusFile = document.getElementById('syllabusFile').files[0];
+            const bookFile = document.getElementById('bookFile').files[0];
+
+            if (!syllabusFile || !bookFile) {
+                showStatus('uploadStatus', 'لطفاً هر دو فایل را انتخاب کنید', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('syllabus', syllabusFile);
+            formData.append('book', bookFile);
+
+            document.getElementById('uploadSpinner').style.display = 'block';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                document.getElementById('uploadSpinner').style.display = 'none';
+
+                if (data.status === 'success') {
+                    showStatus('uploadStatus', data.message, 'success');
+                    
+                    // نمایش اطلاعات کتاب
+                    if (data.book_info && data.book_info.course_name) {
+                        bookInfoData = data.book_info;
+                        displayBookInfo(data.book_info);
+                    }
+                } else {
+                    showStatus('uploadStatus', data.message, 'error');
+                }
+            } catch (error) {
+                document.getElementById('uploadSpinner').style.display = 'none';
+                showStatus('uploadStatus', 'خطا: ' + error.message, 'error');
+            }
+        }
+
+        function displayBookInfo(info) {
+            const bookInfoDiv = document.getElementById('bookInfo');
+            const gridDiv = document.getElementById('bookInfoGrid');
+            const chaptersDiv = document.getElementById('chaptersList');
+            const suggestedDiv = document.getElementById('suggestedRequest');
+
+            let gridHTML = '';
+            if (info.course_name) {
+                gridHTML += `<div class="info-item"><strong>📚 نام درس:</strong><br>${info.course_name}</div>`;
+            }
+            if (info.grade) {
+                gridHTML += `<div class="info-item"><strong>🎓 پایه:</strong><br>${info.grade}</div>`;
+            }
+            if (info.field) {
+                gridHTML += `<div class="info-item"><strong>🔧 رشته:</strong><br>${info.field}</div>`;
+            }
+            if (info.chapters_count) {
+                gridHTML += `<div class="info-item"><strong>📑 تعداد فصل:</strong><br>${info.chapters_count}</div>`;
+            }
+            gridDiv.innerHTML = gridHTML;
+
+            if (info.chapters && info.chapters.length > 0) {
+                let chaptersHTML = '<strong>📋 فصل‌های کتاب:</strong><ul>';
+                info.chapters.forEach(chapter => {
+                    chaptersHTML += `<li>${chapter}</li>`;
+                });
+                chaptersHTML += '</ul>';
+                chaptersDiv.innerHTML = chaptersHTML;
+                chaptersDiv.style.display = 'block';
+            }
+
+            if (info.suggested_request) {
+                suggestedDiv.innerHTML = `
+                    <strong>💡 پیشنهاد هوشمند برای تولید طرح درس:</strong><br>
+                    <em>${info.suggested_request}</em>
+                `;
+                suggestedDiv.style.display = 'block';
+                document.getElementById('useSuggestedBtn').style.display = 'inline-block';
+            }
+
+            bookInfoDiv.style.display = 'block';
+        }
+
+        function useSuggested() {
+            if (bookInfoData.suggested_request) {
+                document.getElementById('userMessage').value = bookInfoData.suggested_request;
+                showStatus('generateStatus', 'پیشنهاد هوشمند اعمال شد! حالا دکمه "تولید طرح درس" را بزنید', 'info');
+            }
+        }
+
+        async function generatePlan() {
+            const message = document.getElementById('userMessage').value;
+
+            if (!message) {
+                showStatus('generateStatus', 'لطفاً درخواست خود را وارد کنید', 'error');
+                return;
+            }
+
+            document.getElementById('generateSpinner').style.display = 'block';
+
+            try {
+                const response = await fetch('/generate_word', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        message: message,
+                        detail_level: 'complete',
+                        weeks_count: 36
+                    })
+                });
+
+                const data = await response.json();
+                document.getElementById('generateSpinner').style.display = 'none';
+
+                if (data.status === 'success') {
+                    currentContent = data.content;
+                    
+                    // نمایش پیش‌نمایش
+                    document.getElementById('preview').innerText = data.content;
+                    document.getElementById('preview').style.display = 'block';
+                    
+                    // نمایش دکمه‌های دانلود
+                    document.getElementById('exportButtons').style.display = 'flex';
+                    
+                    // اگر فایل Word هم تولید شده، لینک مستقیم نشون بده
+                    if (data.filename) {
+                        const downloadLink = document.createElement('div');
+                        downloadLink.style.cssText = 'background: #d4edda; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center;';
+                        downloadLink.innerHTML = `
+                            <strong>✅ فایل Word آماده است!</strong><br>
+                            <a href="/download/${data.filename}" class="btn btn-success" style="margin-top: 10px;" download>📥 دانلود فوری Word</a>
+                        `;
+                        document.getElementById('preview').parentNode.insertBefore(downloadLink, document.getElementById('preview'));
+                    }
+                    
+                    showStatus('generateStatus', data.message + ' - می‌توانید پیش‌نمایش کنید یا دانلود کنید', 'success');
+                } else {
+                    showStatus('generateStatus', data.message, 'error');
+                }
+            } catch (error) {
+                document.getElementById('generateSpinner').style.display = 'none';
+                showStatus('generateStatus', 'خطا: ' + error.message, 'error');
+            }
+        }
+
+        async function exportFile(format) {
+            if (!currentContent) {
+                showStatus('exportStatus', 'ابتدا طرح درس را تولید کنید', 'error');
+                return;
+            }
+
+            showStatus('exportStatus', 'در حال تولید فایل...', 'info');
+
+            try {
+                const response = await fetch('/export', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        content: currentContent,
+                        format: format
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    showStatus('exportStatus', data.message, 'success');
+                    window.open('/download/' + data.filename, '_blank');
+                } else {
+                    showStatus('exportStatus', data.message, 'error');
+                }
+            } catch (error) {
+                showStatus('exportStatus', 'خطا: ' + error.message, 'error');
+            }
+        }
+
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = 'status status-' + type;
+            element.style.display = 'block';
+
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

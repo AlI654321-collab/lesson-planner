@@ -1,0 +1,3 @@
+@echo off
+echo Checking server logs...
+timeout /t 2

@@ -46,7 +46,24 @@ def health():
     return jsonify({
         'status': 'ok',
         'message': 'سرویس فعال است',
-        'api_key_set': bool(os.environ.get('GEMINI_API_KEY'))
+        'api_key_set': bool(os.environ.get('GEMINI_API_KEY')),
+        'files_uploaded': {
+            'syllabus': bool(syllabus_content),
+            'book': bool(book_content)
+        }
+    })
+
+@app.route('/api/status')
+def api_status():
+    """وضعیت API"""
+    global syllabus_content, book_content
+    return jsonify({
+        'status': 'ok',
+        'syllabus_uploaded': len(syllabus_content) > 0,
+        'book_uploaded': len(book_content) > 0,
+        'syllabus_size': len(syllabus_content),
+        'book_size': len(book_content),
+        'api_key_configured': bool(os.environ.get('GEMINI_API_KEY'))
     })
 
 @app.route('/test_ai')
@@ -295,7 +312,20 @@ def generate_word():
     global syllabus_content, book_content
     
     try:
+        # چک کردن فایل‌ها
+        if not syllabus_content or not book_content:
+            return jsonify({
+                'status': 'error',
+                'message': 'لطفاً ابتدا فایل طرح درس نمونه و کتاب را آپلود کنید'
+            }), 400
+        
         data = request.json
+        if not data:
+            return jsonify({
+                'status': 'error',
+                'message': 'داده‌های ورودی خالی است'
+            }), 400
+            
         user_message = data.get('message', '')
         first_name = data.get('firstName', '')
         last_name = data.get('lastName', '')

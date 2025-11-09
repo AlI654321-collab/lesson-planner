@@ -89,39 +89,71 @@ def upload_files():
     global syllabus_content, book_content
     
     try:
+        print("📤 درخواست آپلود دریافت شد")
+        
+        if not request.files:
+            return jsonify({
+                'status': 'error',
+                'message': 'هیچ فایلی ارسال نشده است'
+            }), 400
+        
         syllabus_name = None
         book_name = None
+        book_info = {}
         
         if 'syllabus' in request.files:
             syllabus_file = request.files['syllabus']
-            if syllabus_file.filename != '':
-                print("📄 در حال خواندن طرح درس نمونه...")
-                syllabus_content = extract_text_from_pdf(syllabus_file)
-                syllabus_name = syllabus_file.filename
-                print(f"✓ طرح درس: {len(syllabus_content)} کاراکتر")
+            if syllabus_file and syllabus_file.filename != '':
+                print(f"📄 در حال خواندن طرح درس نمونه: {syllabus_file.filename}")
+                try:
+                    syllabus_content = extract_text_from_pdf(syllabus_file)
+                    syllabus_name = syllabus_file.filename
+                    print(f"✓ طرح درس: {len(syllabus_content)} کاراکتر")
+                except Exception as e:
+                    print(f"✗ خطا در خواندن طرح درس: {e}")
+                    return jsonify({
+                        'status': 'error',
+                        'message': f'خطا در خواندن فایل طرح درس: {str(e)}'
+                    }), 400
         
         if 'book' in request.files:
             book_file = request.files['book']
-            if book_file.filename != '':
-                print("📚 در حال خواندن کل کتاب...")
-                book_content = extract_text_from_pdf(book_file)
-                book_name = book_file.filename
-                print(f"✓ کتاب: {len(book_content)} کاراکتر")
-                
-                # تحلیل خودکار کتاب
-                print("🔍 در حال تحلیل محتوای کتاب...")
-                book_info = analyze_book_content(book_content)
+            if book_file and book_file.filename != '':
+                print(f"📚 در حال خواندن کل کتاب: {book_file.filename}")
+                try:
+                    book_content = extract_text_from_pdf(book_file)
+                    book_name = book_file.filename
+                    print(f"✓ کتاب: {len(book_content)} کاراکتر")
+                    
+                    # تحلیل خودکار کتاب
+                    print("🔍 در حال تحلیل محتوای کتاب...")
+                    try:
+                        book_info = analyze_book_content(book_content)
+                    except Exception as e:
+                        print(f"⚠️ خطا در تحلیل کتاب: {e}")
+                        book_info = {'course_name': 'نامشخص'}
+                except Exception as e:
+                    print(f"✗ خطا در خواندن کتاب: {e}")
+                    return jsonify({
+                        'status': 'error',
+                        'message': f'خطا در خواندن فایل کتاب: {str(e)}'
+                    }), 400
         
         return jsonify({
             'status': 'success',
             'syllabus_name': syllabus_name,
             'book_name': book_name,
-            'book_info': book_info if 'book_info' in locals() else {},
+            'book_info': book_info,
             'message': 'فایل‌ها با موفقیت پردازش شدند'
         })
     except Exception as e:
-        print(f"✗ خطا: {e}")
-        return jsonify({'status': 'error', 'message': str(e)})
+        print(f"✗ خطای کلی: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'status': 'error',
+            'message': f'خطای سرور: {str(e)}'
+        }), 500
 
 def analyze_book_content(content):
     """تحلیل خودکار محتوای کتاب"""
